@@ -15,7 +15,8 @@ namespace PlaywrightScraper.Scraper
             var playwright = await Playwright.CreateAsync();
             _browser = await playwright.Chromium.LaunchAsync(
                 new BrowserTypeLaunchOptions { 
-                    Headless = true 
+                    Headless = false,
+                    //Args = new[] { "--disable-blink-features=AutomationControlled" }
                 });
             _context = await _browser.NewContextAsync();
             _page = await _context.NewPageAsync();
