@@ -1,0 +1,12 @@
+# products compilation
+bin/
+obj/
+
+# Visual Studio user settings
+.vs/
+
+# other stuff
+*.user
+*.suo
+*.cache
+*.log
