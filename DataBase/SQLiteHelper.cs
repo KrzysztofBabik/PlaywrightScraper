@@ -14,12 +14,29 @@ namespace PlaywrightScraper.DataBase
             using var connection = new SQLiteConnection(_connectionString);
             connection.Open();
             var command = new SQLiteCommand(
-                "CREATE TABLE IF NOT EXISTS Prices (Id INTEGER PRIMARY KEY, Product TEXT, Price TEXT, Date DATETIME DEFAULT CURRENT_TIMESTAMP)",
+                "CREATE TABLE IF NOT EXISTS Prices (" +
+                "Id INTEGER PRIMARY KEY, " +
+                "Product TEXT, " +
+                "Price TEXT, " +
+                "Date DATETIME DEFAULT CURRENT_TIMESTAMP)",
                 connection);
-            command.ExecuteNonQuery();
+            command.ExecuteNonQuery();  
         }
+        public decimal GetLowestPrice(string product)
+        {
+            using var connection = new SQLiteConnection(_connectionString);
 
-        public void SavePrices(string product, string price)
+            connection.Open();
+
+            var query = "SELECT Price FROM Prices WHERE Product = @product ORDER BY Price ASC LIMIT 1";
+            var command = new SQLiteCommand(query, connection);
+            command.Parameters.AddWithValue("@product", product);
+            
+            var result = command.ExecuteScalar();
+            return result != null ? Convert.ToDecimal(result) : 0;
+       
+        }
+        public void SavePrice(string product, string price)
         {
             using var connection = new SQLiteConnection(_connectionString);
             connection.Open();

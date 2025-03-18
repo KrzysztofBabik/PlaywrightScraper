@@ -1,4 +1,6 @@
 ﻿using Microsoft.Playwright;
+using PlaywrightScraper.DataBase;
+using PlaywrightScraper.Notifier;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,14 @@ namespace PlaywrightScraper.Scraper
 {
     public class MediaExpertScraper : ScraperBase
     {
+        SQLiteHelper _db;
+        EmailNotifier _emailNotifier;
+        public MediaExpertScraper()
+        {
+            _db = new SQLiteHelper();
+            _emailNotifier = new EmailNotifier();
+
+        }
         public async override Task ScrapeAsync(string url)
         {
             if (url == null) throw new InvalidOperationException("Page is not initialized!");
@@ -17,7 +27,7 @@ namespace PlaywrightScraper.Scraper
             await _page.GotoAsync(url);
             await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            var title = await _page.TextContentAsync("h1");
+            var product = await _page.TextContentAsync("h1");
 
             var priceElement = await _page.QuerySelectorAsync(".whole");
             if (priceElement != null)
@@ -27,13 +37,18 @@ namespace PlaywrightScraper.Scraper
 
                 if (decimal.TryParse(cleanedPriceText, out decimal price))
                 {
-                    Console.WriteLine($"Product: {title?.Trim()}, Price: {price}");
+                    Console.WriteLine($"Product: {product?.Trim()}, Price: {price}");
+                    var lowestKnownPrice = _db.GetLowestPrice(product);
+                    if (price <= lowestKnownPrice)
+                    {
+                        _emailNotifier.SendEmail($"This is the lowest known price for this product!", $"Price of product: {product}\n dropped to {price}PLN!");
+                    }
+                    _db.SavePrice(product, price.ToString());
                 }
                 else
                 {
                     throw new FormatException("The price format is invalid or the price could not be parsed.");
                 }
-
             }
             else
             {
